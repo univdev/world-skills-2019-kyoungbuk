@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        text-decoration: none;
+        list-style: none;
+    }
+
+    a {
+        color: #000;
+    }
+
+    .container {
+        max-width: 1440px;
+        margin: 0 auto;
+        height: 100%;
+    }
+
+    .clear {
+        clear: both;
+    }
+    
+    button {
+        cursor: pointer;
+        outline: none;
+    }
+
+    header {
+        width: 100%;
+        border-bottom: 1px solid #eee;
+    }
+
+    header .head-top {
+        height: 35px;
+        padding-top: 5px;
+        background-color: #f5f5f5;
+    }
+
+    header .head-top ul {
+        float: right;
+    }
+
+    header .head-top ul li {
+        padding: 0 8px;
+        float: left;
+    }
+
+    header .head-top ul li a {
+        font-size: 12px;
+    }
+
+    header .head-top ul li:last-child {
+        padding-right: 0;
+    }
+
+    header .head-main {
+        height: 90px;
+    }
+
+    header .head-main .logo {
+        float: left;
+        padding-top: 20px;
+    }
+
+    header .head-main nav {
+        float: right;
+        padding-top: 30px;
+    }
+
+    header .head-main nav ul li {
+        padding: 0 25px;
+        float: left;
+    }
+
+    header .head-main nav ul li:last-child {
+        padding-right: 0;
+    }
+
+    #videoEdit {
+        width: 100%;
+        margin-top: 50px;
+    }
+
+    #videoEdit .button-box {
+        width: 10%;
+        padding: 0 10px;
+        float: left;
+    }
+
+    #videoEdit .button-box button {
+        width: 100%;
+        height: 40px;
+        float: left;
+        border: none;
+        border-radius: 15px 0 15px 0;
+        background-color: rgb(214, 214, 214);
+        color: #333;
+    }
+
+    #videoEdit .button-box button:not(:first-child) {
+        margin-top: 10px;
+    }
+
+    #videoEdit .video-box {
+        width: 75%;
+        height: 600px;
+        margin: 0 20px;
+        float: left;
+        background-color: #333;
+        position: relative;
+    }   
+
+    #videoEdit canvas {
+        position: absolute;
+    }
+
+    #videoEdit .video-box p {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+        font-size: 20px;
+        font-weight: 100;
+    }
+
+    #videoEdit .video-box canvas#video {
+        z-index: 1;
+    }
+    #videoEdit .video-box canvas#triggerCanvas {
+        z-index: 11;
+    }
+    #videoEdit .video-box canvas#drawCanvas {
+        z-index: 10;
+    }
+
+    #videoEdit .video-box video {
+        width: 100%;
+        height: 100%;
+    }
+
+    #videoEdit .option-box {
+        width: 10%;
+        float: right;
+    }
+
+    #videoEdit .option-box select {
+        float: left;
+        width: 100%;
+        height: 35px;
+    }
+
+    #videoEdit .option-box select:not(:first-child) {
+        margin-top: 10px;
+    }
+
+    #videoEdit .timeTrack {
+        width: 100%;
+        float: left;
+        margin-top: 50px;
+        padding: 0 120px;
+    }
+
+    #videoEdit .timeTrack p {
+        float: left;
+    }
+
+    #videoEdit .timeTrack .right {
+        float: right;
+    }
+
+    #videoEdit .timeTrack .right p {
+        margin: 0 13px;
+    }
+
+    #videoEdit .timeTrack .right p:last-child {
+        margin-right: 0;
+    }
+
+    #thumbnail {
+        width: 100%;
+        margin: 100px 0;
+    }
+
+    #thumbnail .container > div {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    #thumbnail .container > div img {
+        width: 230px;
+        float: left;
+    }
+</style>
+<body>
+    <header>
+        <div class="head-top">
+            <div class="container">
+                <ul>
+                    <li><a href="">로그인</a></li>
+                    <li><a href="">회원가입</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="head-main">
+            <div class="container">
+                <div class="logo">
+                    <h1>LOGO</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="">부산국제영화제</a></li>
+                        <li><a href="">출품신청</a></li>
+                        <li><a href="">상영일정</a></li>
+                        <li><a href="">상영작검색</a></li>
+                        <li><a href="">이벤트</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <div class="clear"></div>
+    </header>
+
+    <section id="videoEdit">
+        <div class="container">
+            <div class="button-box">
+                <button type="button" data-class="line" class="line-btn draw-btn">자유곡선</button>
+                <button type="button" data-class="square" class="square-btn draw-btn">사각형</button>
+                <button type="button" data-class="text" class="text-btn draw-btn">텍스트</button>
+                <button type="button" class="select-btn">선택</button>
+                <button type="button" class="play-btn">재생</button>
+                <button type="button" class="pause-btn">정지</button>
+                <button type="button" class="all-delete-btn">전체 삭제</button>
+                <button type="button" class="select-delete-btn">선택 삭제</button>
+                <button type="button" class="download-btn">다운로드</button>
+                <div class="clear"></div>
+            </div>
+            <div class="video-box">
+                <canvas id="video" width="1080" height="600"></canvas>
+                <canvas id="triggerCanvas" width="1080" height="600"></canvas>
+                <canvas id="drawCanvas" width="1080" height="600"></canvas>
+                <video id="player" src="" width="1080"></video>
+                <p id="noVideo">동영상을 선택해주세요.</p>
+            </div>
+            <div class="option-box">
+                <select id="color">
+                    <option value="gray">gray</option>
+                    <option value="blue">blue</option>
+                    <option value="green">green</option>
+                    <option value="red">red</option>
+                    <option value="yellow">yellow</option>
+                </select>
+                <select id="line">
+                    <option value="3">3px</option>
+                    <option value="5">5px</option>
+                    <option value="10">10px</option>
+                </select>
+                <select id="fontSize">
+                    <option value="16">16px</option>
+                    <option value="18">18px</option>
+                    <option value="24">24px</option>
+                    <option value="32">32px</option>
+                </select>
+            </div>
+            <div class="timeTrack">
+                <p>00 : 00 : 00 : 00 / 00 : 00 : 00 : 00</p>
+                <div class="right">
+                    <p><span>시작 시간 : </span> 00 : 00 : 00 : 00 / 00 : 00 : 00 : 00</p>
+                    <p><span>유지 시간 : </span> 00 : 00 : 00 : 00 / 00 : 00 : 00 : 00</p>
+                </div>
+                <div>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="clear"></div>
+    </section>
+    
+    <section id="thumbnail">
+        <div class="container">
+            <div class="box">
+                <img src="./common/movie1-cover.jpg" alt="movie1" data-video="movie1.mp4">
+                <img src="./common/movie2-cover.jpg" alt="movie2" data-video="movie2.mp4">
+                <img src="./common/movie3-cover.jpg" alt="movie3" data-video="movie3.mp4">
+                <img src="./common/movie4-cover.jpg" alt="movie4" data-video="movie4.mp4">
+                <img src="./common/movie5-cover.jpg" alt="movie5" data-video="movie5.mp4">
+            </div>
+        </div>
+        <div class="clear"></div>
+    </section>
+    <script src="jquery.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
