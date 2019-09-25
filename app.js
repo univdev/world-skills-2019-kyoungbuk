@@ -29,11 +29,10 @@
     var RectManager = {
         init(rects) {
             var target = document.getElementById('drawCanvas');
-            var ctx = target.getContext('2d');
 
+            this.clear(target);
             for (var rect of rects) {
                 var type = rect.type;
-                ctx.beginPath();
                 switch (type) {
                     case 'box':
                         var coords = rect.coords || {};
@@ -41,26 +40,47 @@
                         var startY = coords.startY;
                         var endX = coords.endX;
                         var endY = coords.endY;
-                        var width = endX - startX;
-                        var height = endY - startY;
-                        var border = rect.border;
-                        var color = rect.color;
-                        var textSize = rect.textSize;
-
-                        ctx.fillStyle = color;
-                        ctx.fontSize = textSize;
-                        ctx.lineWidth = border;
-                        ctx.fillRect(startX, startY, width, height);
+                        console.log(startX, startY);
+                        var color = rect.color || 'yellow';
+                        var canvas = document.getElementById('drawCanvas');
+                        this.square(canvas, color, startX, startY, endX, endY);
                         break;
                 }
-                ctx.closePath();
             }
+        },
+        square(canvas, color, startX, startY, endX, endY) {
+            var ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.fillRect(startX, startY, endX - startX, endY - startY);
+            ctx.closePath();
+        },
+        clear(canvas) {
+            var width = canvas.width;
+            var height = canvas.height;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+        },
+    };
+
+    var CoordsManager = {
+        start(coords) {
+            return (coords || [])[0] || null;
+        },
+        end(coords) {
+            var length = coords.length || 0;
+            return (coords || [])[length - 1] || null;
+        },
+        get(coords, index) {
+            return (coords || [])[index] || null;
         },
     };
 
     var triggerCanvas = document.getElementById('triggerCanvas');
     var videoPosters = document.querySelectorAll('img[data-video]');
     var playButton = (document.getElementsByClassName('play-btn') || [])[0];
+    var allClearButton = (document.getElementsByClassName('all-delete-btn') || [])[0];
+    var pauseButton = (document.getElementsByClassName('pause-btn') || [])[0];
 
     playButton.addEventListener('click', () => VideoManager.play(true));
 
@@ -74,17 +94,25 @@
     var flag = false;
 
     triggerCanvas.addEventListener('mousedown', (e) => {
-        console.log(e);
+        flag = true;
         coords = [[e.offsetX, e.offsetY]];
     });
     triggerCanvas.addEventListener('mousemove', (e) => {
         if (!flag) return;
         coords.push([e.offsetX, e.offsetY]);
+
+        var canvas = document.getElementById('triggerCanvas');
+        var startCoords = CoordsManager.start(coords);
+        var endCoords = CoordsManager.end(coords);
+        RectManager.clear(canvas);
+        RectManager.square(canvas, 'rgba(255, 255, 0, .2)', startCoords[0], startCoords[1], endCoords[0], endCoords[1]);
     });
     triggerCanvas.addEventListener('mouseup', (e) => {
+        flag = false;
         coords.push([e.offsetX, e.offsetY]);
-        var firstCoords = coords[0] || [];
-        var lastCoords = coords[coords.length - 1] || [];
+        var triggerCanvas = document.getElementById('triggerCanvas');
+        var firstCoords = CoordsManager.start(coords) || [];
+        var lastCoords = CoordsManager.end(coords) || [];
         var startX = firstCoords[0] || 0;
         var startY = firstCoords[1] || 0;
         var endX = lastCoords[0] || 0;
@@ -93,6 +121,8 @@
         var border = currentOption.border || '3px';
         var textSize = currentOption.textSize || '16px';
         var temp;
+
+        RectManager.clear(triggerCanvas);
         if (startX > endX) {
             temp = startX;
             startX = endX;
@@ -106,6 +136,12 @@
         var data = { startX, startY, endX, endY };
         rects.push({ type, border, textSize, coords: data });
         RectManager.init(rects);
-        console.log(rects);
+    });
+    allClearButton.addEventListener('click', () => {
+        var canvas = document.getElementById('drawCanvas');
+        RectManager.clear(canvas);
+    });
+    pauseButton.addEventListener('click', () => {
+        VideoManager.play(false);
     });
 })()
