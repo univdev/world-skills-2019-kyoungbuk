@@ -2,8 +2,9 @@
 
     var currentOption = {
         tool: 'box',
-        border: '3px',
-        textSize: '18px',
+        border: 3,
+        font: 18,
+        selectedObject: null,
     };
 
     var rects = [];
@@ -47,26 +48,64 @@
             var target = document.getElementById('drawCanvas');
             this.clear(target);
             for (var rect of rects) {
-                var type = rect.type;
-                switch (type) {
+                var tool = rect.tool;
+                var coords = rect.coords || {};
+                var startX = coords.startX;
+                var startY = coords.startY;
+                var endX = coords.endX;
+                var endY = coords.endY;
+                var color = rect.color || 'yellow';
+                var border = rect.border;
+                var font = rect.font;
+                var canvas = document.getElementById('drawCanvas');
+                var active = rect.active || false;
+                switch (tool) {
                     case 'box':
-                        var coords = rect.coords || {};
-                        var startX = coords.startX;
-                        var startY = coords.startY;
-                        var endX = coords.endX;
-                        var endY = coords.endY;
-                        var color = rect.color || 'yellow';
-                        var canvas = document.getElementById('drawCanvas');
-                        this.square(canvas, color, startX, startY, endX, endY);
+                        this.square(canvas, color, startX, startY, endX, endY, active);
+                        break;
+                    case 'line':
+                        this.line(canvas, coords, color, border, active);
                         break;
                 }
             }
         },
-        square(canvas, color, startX, startY, endX, endY) {
+        square(canvas, color, startX, startY, endX, endY, active) {
             var ctx = canvas.getContext('2d');
             ctx.beginPath();
+            if (active) {
+                ctx.fillStyle = 'skyblue';
+                ctx.fillRect(startX - 2, startY - 2, (endX - startX) + 4, (endY - startY) + 4);
+            }
             ctx.fillStyle = color;
             ctx.fillRect(startX, startY, endX - startX, endY - startY);
+            ctx.closePath();
+        },
+        line(canvas, coords, color, border, active) {
+            var ctx = canvas.getContext('2d');
+            var start = CoordsManager.start(coords);
+
+            if (active) {
+                ctx.beginPath();
+                ctx.lineWidth = (border * 1) + 5;
+                ctx.strokeStyle = 'skyblue';
+                ctx.moveTo(start[0], start[1]);
+                for (var i = 1; i < coords.length; i += 1) {
+                    var coord = CoordsManager.get(coords, i) || [];
+                    ctx.lineTo(coord[0], coord[1]);
+                }
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            ctx.beginPath();
+            ctx.lineWidth = border;
+            ctx.strokeStyle = color;
+            ctx.moveTo(start[0], start[1]);
+            for (var i = 1; i < coords.length; i += 1) {
+                var coord = CoordsManager.get(coords, i) || [];
+                ctx.lineTo(coord[0], coord[1]);
+            }
+            ctx.stroke();
             ctx.closePath();
         },
         clear(canvas) {
@@ -93,10 +132,81 @@
             var index = this.getMaxIndex(rects) + 1;
             options.index = index;
             options.floor = rects.length + 1;
+            options.active = false;
             rects.push(options);
         },
         sortByFloor(rects) {
             return (rects || []).sort((a, b) => a.floor > b.floor ? 1 : a.floor < b.floor ? -1 : 0);
+        },
+        check(rects, x, y) {
+            rects = this.sortByFloor(rects);
+            for (var rect of rects) {
+                var coords = rect.coords;
+                switch (rect.tool) {
+                    case 'box':
+                        var startX = coords.startX;
+                        var startY = coords.startY;
+                        var endX = coords.endX;
+                        var endY = coords.endY;
+                        if (this.checkBox(startX, startY, endX, endY, x, y)) return rect;
+                        break;
+                    case 'line':
+                        if (this.checkLine(coords, rect.border, x, y)) return rect;
+                        break;
+                }
+            }
+            return false;
+        },
+        checkBox(startX, startY, endX, endY, x, y) {
+            return (startX <= x && endX >= x) && (startY <= y && endY >= y);
+        },
+        checkLine(coords, range, x, y) {
+            range *= 1;
+            for (var coord of coords) {
+                var targetX = coord[0];
+                var targetY = coord[1];
+                var startX = targetX - range;
+                var startY = targetY - range;
+                var endX = targetX + range;
+                var endY = targetY + range;
+                if ((startX <= x && endX >= x) && (startY <= y && endY >= y)) return true;
+            }
+        },
+        clearActive() {
+            return rects.map((item) => {
+                item.active = false;
+                return item;
+            });
+        },
+        movement(rect, vector) {
+            var tool = rect.tool;
+            switch (tool) {
+                case 'box':
+                    this.moveBox(rect, vector);
+                    break;
+                case 'line':
+                    this.moveLine(rect, vector);
+                    break;
+            }
+        },
+        moveBox(rect, vector) {
+            var vectorX = vector[0];
+            var vectorY = vector[1];
+            var coords = rect.coords;
+            coords.startX += vectorX;
+            coords.startY += vectorY;
+            coords.endX += vectorX;
+            coords.endY += vectorY;
+        },
+        moveLine(rect, vector) {
+            var x = vector[0];
+            var y = vector[1];
+            var coords = rect.coords;
+            coords.map((item) => {
+                item[0] = item[0] + x;
+                item[1] = item[1] + y;
+                return item;
+            });
         },
     };
 
@@ -193,17 +303,31 @@
         },
     };
 
+    var TriggerManager = {
+        canvas: document.getElementById('triggerCanvas'),
+        box(startX, startY, endX, endY) {
+            var width = endX - startX;
+            var height = endY - startY;
+            RectManager.square(this.canvas, 'rgba(255, 255, 0, .2)', startX, startY, width, height);
+        },
+        clear() {
+            RectManager.clear(this.canvas);
+        },
+    };
+
     var triggerCanvas = document.getElementById('triggerCanvas');
     var videoPosters = (document.querySelectorAll('img[data-video]') || []);
     var playButton = (document.getElementsByClassName('play-btn') || [])[0];
     var allClearButton = (document.getElementsByClassName('all-delete-btn') || [])[0];
     var pauseButton = (document.getElementsByClassName('pause-btn') || [])[0];
+    var selectButton = document.getElementsByClassName('select-btn')[0];
     var video = document.getElementById('player');
     var timeline = document.getElementsByClassName('layer__timeline')[0];
     var ableTimelineMove = true;
     var colorComboBox = document.getElementById('color');
     var lineComboBox = document.getElementById('line');
     var fontSizeComboBox = document.getElementById('fontSize');
+    var selectDeleteButton = document.getElementsByClassName('select-delete-btn')[0];
 
     playButton.addEventListener('click', () => VideoManager.play(true));
 
@@ -219,16 +343,43 @@
     triggerCanvas.addEventListener('mousedown', (e) => {
         flag = true;
         coords = [[e.offsetX, e.offsetY]];
+        switch (currentOption.tool) {
+            case 'select':
+                currentOption.selectedObject = RectManager.check(rects, e.offsetX, e.offsetY);
+                RectManager.clearActive();
+                if (!currentOption.selectedObject) {
+                    RectManager.clearActive();
+                } else {
+                    currentOption.selectedObject.active = true;
+                }
+
+                VideoManager.visibleRects(video.currentTime, rects);
+                break;
+        }
     });
     triggerCanvas.addEventListener('mousemove', (e) => {
         if (!flag) return;
         coords.push([e.offsetX, e.offsetY]);
 
-        var canvas = document.getElementById('triggerCanvas');
         var startCoords = CoordsManager.start(coords);
         var endCoords = CoordsManager.end(coords);
-        RectManager.clear(canvas);
-        RectManager.square(canvas, 'rgba(255, 255, 0, .2)', startCoords[0], startCoords[1], endCoords[0], endCoords[1]);
+        TriggerManager.clear();
+        switch (currentOption.tool) {
+            case 'box':
+                TriggerManager.box(startCoords[0], startCoords[1], endCoords[0], endCoords[1]);
+                break;
+            case 'select':
+                if (!currentOption.selectedObject) return;
+                var lastCoords = CoordsManager.get(coords, coords.length - 2);
+                var startX = lastCoords[0];
+                var startY = lastCoords[1];
+                var currentX = e.offsetX;
+                var currentY = e.offsetY;
+                var vector = [currentX - startX, currentY - startY];
+                RectManager.movement(currentOption.selectedObject, vector);
+                break;
+        }
+        VideoManager.visibleRects(video.currentTime, rects);
     });
     triggerCanvas.addEventListener('mouseup', (e) => {
         flag = false;
@@ -241,13 +392,12 @@
         var startY = firstCoords[1] || 0;
         var endX = lastCoords[0] || 0;
         var endY = lastCoords[1] || 0;
-        var type = currentOption.type || 'box';
+        var tool = currentOption.tool || 'box';
         var color = currentOption.color || 'gray';
         var border = currentOption.border || '3px';
-        var textSize = currentOption.textSize || '16px';
+        var font = currentOption.font || '16px';
         var currentTime = player.currentTime;
         var temp;
-        RectManager.clear(triggerCanvas);
         if (startX > endX) {
             temp = startX;
             startX = endX;
@@ -259,19 +409,30 @@
             endY = temp;
         }
         var data = { startX, startY, endX, endY };
-        var uid = rects.length || 0; // 임시
         var time = { start: currentTime, end: currentTime + 5 };
-        RectManager.push(rects, { type, border, textSize, coords: data, uid, time, color });
+        switch (currentOption.tool) {
+            case 'box':
+                RectManager.push(rects, { tool, border, font, coords: data, time, color });
+                break;
+            case 'line':
+                RectManager.push(rects, { tool, border, font, coords, time, color });
+                break;
+        }
         VideoManager.visibleRects(currentTime, rects);
         LayerManager.init(rects);
+        TriggerManager.clear();
     });
     allClearButton.addEventListener('click', () => {
         var canvas = document.getElementById('drawCanvas');
-        RectManager.clear(canvas);
+        rects = [];
+        RectManager.init(rects);
         LayerManager.clear();
     });
     pauseButton.addEventListener('click', () => {
         VideoManager.play(false);
+    });
+    selectButton.addEventListener('click', () => {
+        currentOption.tool = 'select';
     });
     video.addEventListener('timeupdate', () => {
         if (!ableTimelineMove) return;
@@ -302,5 +463,26 @@
     colorComboBox.addEventListener('change', () => {
         var color = colorComboBox.value;
         currentOption.color = color;
+    });
+    lineComboBox.addEventListener('change', () => {
+        var line = lineComboBox.value;
+        currentOption.border = line;
+    });
+    fontSizeComboBox.addEventListener('change', () => {
+        var fontSize = fontSizeComboBox.value;
+        currentOption.font = fontSize;
+    });
+    $(document).on('click', '.draw-btn', function() {
+        var type = $(this).data('class');
+        currentOption.tool = type;
+    });
+    selectDeleteButton.addEventListener('click', () => {
+        if (!currentOption.selectedObject) {
+            alert('선택된 오브젝트가 없습니다.');
+            return;
+        }
+        rects = rects.filter(item => item.index !== currentOption.selectedObject.index);
+        VideoManager.visibleRects(video.currentTime, rects);
+        LayerManager.init(rects);
     });
 })()
