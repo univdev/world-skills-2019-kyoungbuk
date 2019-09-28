@@ -89,6 +89,13 @@
         width: 100%;
         margin-top: 50px;
     }
+    #videoEdit .container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    #videoEdit .container .player-container {
+        width: 1080px;
+    }
 
     #videoEdit .button-box {
         width: 10%;
@@ -111,10 +118,8 @@
     }
 
     #videoEdit .video-box {
-        width: 75%;
+        width: 1080px;
         height: 600px;
-        margin: 0 20px;
-        float: left;
         background-color: #333;
         position: relative;
     }   
@@ -141,6 +146,40 @@
     }
     #videoEdit .video-box canvas#drawCanvas {
         z-index: 10;
+    }
+    #videoEdit .layer {
+        width: 100%;
+        min-height: 100px;
+        position: relative;
+        margin-top: 8px;
+    }
+    #videoEdit .layer .layer__timeline {
+        width: 2px;
+        height: 100%;
+        background-color: red;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 10000;
+    }
+    #videoEdit .layer__row {
+        position: relative;
+        width: 100%;
+        margin-bottom: 8px;
+        background-color: #DDD;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    #videoEdit .layer__row:last-of-type {
+        margin-bottom: 0;
+    }
+    #videoEdit .layer__progress {
+        height: 24px !important;
+        cursor: pointer;
+        background-color: rgba(135, 206, 235, 1);
+    }
+    #videoEdit .video-box .layer__progress:hover {
+        background-color: rgba(135, 206, 255, 1);
     }
 
     #videoEdit .video-box video {
@@ -202,6 +241,7 @@
         float: left;
     }
 </style>
+<link rel="stylesheet" href="https://code.jquery.com/ui/jquery-ui-git.css">
 <body>
     <header>
         <div class="head-top">
@@ -245,12 +285,17 @@
                 <button type="button" class="download-btn">다운로드</button>
                 <div class="clear"></div>
             </div>
-            <div class="video-box">
-                <canvas id="video" width="1080" height="600"></canvas>
-                <canvas id="triggerCanvas" width="1080" height="600"></canvas>
-                <canvas id="drawCanvas" width="1080" height="600"></canvas>
-                <video id="player" src="" width="1080"></video>
-                <p id="noVideo">동영상을 선택해주세요.</p>
+            <div class="player-container">
+                <div class="video-box">
+                    <canvas id="video" width="1080" height="600"></canvas>
+                    <canvas id="triggerCanvas" width="1080" height="600"></canvas>
+                    <canvas id="drawCanvas" width="1080" height="600"></canvas>
+                    <video id="player" src="" width="1080"></video>
+                    <p id="noVideo">동영상을 선택해주세요.</p>
+                </div>
+                <div class="layer">
+                    <div class="layer__timeline"></div>
+                </div>
             </div>
             <div class="option-box">
                 <select id="color">
@@ -282,6 +327,7 @@
                     
                 </div>
             </div>
+            <div class="clear"></div>
         </div>
         <div class="clear"></div>
     </section>
@@ -299,6 +345,10 @@
         <div class="clear"></div>
     </section>
     <script src="jquery.js"></script>
+    <script
+    src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+    crossorigin="anonymous"></script>
     <script src="app.js"></script>
 </body>
 </html>
